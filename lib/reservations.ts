@@ -1,5 +1,3 @@
-import { env } from 'cloudflare:workers';
-export function database() { if (!env.DB) throw new Error('Base de reservas no disponible'); return env.DB; }
 export function validate(v: Record<string, unknown>): Record<'title'|'sector'|'responsible'|'contact'|'date'|'start'|'end'|'service'|'notes',string> & {guests:number;sectors:string[]} {
  const fields = ['title','sector','responsible','contact','date','start','end','service','notes'] as const;
  const data = Object.fromEntries(fields.map(k => [k, typeof v[k] === 'string' ? (v[k] as string).trim() : ''])) as Record<(typeof fields)[number],string>;
@@ -12,6 +10,3 @@ export function validate(v: Record<string, unknown>): Record<'title'|'sector'|'r
  return {...data, guests,sectors};
 }
 export function sameOrigin(request: Request) {const origin=request.headers.get('origin');return !!origin && origin===new URL(request.url).origin;}
-
-
-

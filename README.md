@@ -4,23 +4,52 @@ Aplicación modular para coordinar la cocina de la iglesia. Interfaz en español
 
 ## Datos y acceso
 
-Las reservas y la configuración se guardan en D1 compartido. La publicación inicial es privada para el propietario; habilitar acceso a los miembros desde la configuración de acceso de Sites antes de usarla en equipo. Los miembros con acceso a esta versión pueden modificar todas las reservas y la configuración. No hay roles diferenciados en esta versión.
+La aplicación es Next.js (App Router) desplegable en Vercel. Los datos y la autenticación están en Supabase (Postgres + Auth). Las reservas, atenciones, nómina, lugares y configuración se guardan en tablas con RLS: solo los usuarios autenticados pueden leer y modificar; el acceso anónimo no existe. Todos los miembros pueden modificar todas las reservas y la configuración. No hay roles diferenciados en esta versión.
 
-Las reservas ocupan un horario dentro de un mismo día. La prevención de superposición se aplica en un solo INSERT o UPDATE SQL para evitar carreras entre solicitudes simultáneas. Los horarios incluyen preparación y limpieza. La edición restablece el estado de preparación. La lista del mes se actualiza cada 30 segundos o manualmente.
+Las reservas ocupan un horario dentro de un mismo día. La prevención de superposición se aplica dentro de funciones de Postgres (RPC `create_reservations`, `update_reservation_single`, `update_reservation_series`) que serializan las escrituras con un bloqueo asesor transaccional, de modo que dos solicitudes simultáneas no pueden crear cruces. Los horarios incluyen preparación y limpieza. La edición restablece el estado de preparación. La lista del mes se actualiza cada 30 segundos o manualmente.
+
+### Usuarios (solo por invitación)
+
+El ingreso es con usuario y contraseña. Internamente, Supabase Auth necesita un correo, por lo que cada usuario recibe uno interno derivado (`<usuario>@users.cca-sector7.app`); nunca se envían correos.
+
+1. En el panel de Supabase (Authentication > Sign In / Providers) desactivar los registros públicos (Allow new users to sign up).
+2. Crear usuarios con el script de administración, solo en una máquina local:
+
+```
+node --env-file=.env.local scripts/create-user.mjs <usuario> <contraseña> "<Nombre Completo>"
+node --env-file=.env.local scripts/create-user.mjs --reset-password <usuario> <contraseña>
+```
+
+El usuario admite 3 a 32 caracteres: letras minúsculas, números, punto, guion y guion bajo. La contraseña debe tener al menos 8 caracteres. El script usa SUPABASE_SECRET_KEY, que es solo local: no se configura en Vercel, no se publica y la aplicación no la lee.
+
+### Variables de entorno
+
+- NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: obligatorias en local (.env.local) y en Vercel. Ver .env.example.
+- SUPABASE_SECRET_KEY: solo local, para scripts/create-user.mjs.
+
+Los datos que existían en el D1 de ChatGPT Sites no se migraron: la base de Supabase comienza vacía, salvo las listas iniciales de lugares y hermanos.
 
 ## Estructura y crecimiento
 
 - app/page.tsx: vistas Calendario, Para cocina y Configuración.
 - app/api/reservations: operaciones de reservas.
 - app/api/settings: configuración compartida.
-- lib/reservations.ts: acceso a datos, validación y protección de solicitudes.
-- db/schema.ts y drizzle/: esquema y migraciones.
+- lib/reservations.ts: validación y protección de solicitudes. lib/api.ts: cliente autenticado y utilidades de API.
+- lib/supabase/ y proxy.ts: clientes de Supabase y renovación de sesión; app/login: ingreso.
+- supabase/migrations/: esquema, RLS, funciones RPC y datos iniciales.
 
 Viajes misioneros es una ampliación futura, aún no implementada. Agregar un módulo separado con tablas de viajes, zonas y responsables, sus propias rutas de interfaz y API. Mantener los identificadores de las entidades independientes de sus nombres editables. Las migraciones publicadas deben permanecer inmutables; las ampliaciones requieren nuevas migraciones.
 
 ## Desarrollo
 
-El starter usa Vinext/React y Cloudflare Workers. Los comandos habituales son npm run dev, npm run build, npm run db:generate. Las migraciones de previsualización se aplican con Wrangler de forma local; Sites aplica las migraciones de producción al publicar. El manifest .openai/hosting.json identifica el mismo Site para futuras actualizaciones.
+Next.js + Supabase + Vercel. Requiere Node 22.13 o superior.
+
+1. pnpm install
+2. Copiar .env.example a .env.local y completar las variables.
+3. Aplicar las migraciones de supabase/migrations al proyecto de Supabase (con la CLI de Supabase o desde el editor SQL, en orden de nombre). Las migraciones publicadas deben permanecer inmutables; los cambios requieren una nueva.
+4. pnpm dev (desarrollo), pnpm build y pnpm start (producción), pnpm lint.
+
+Para publicar en Vercel, importar el repositorio y definir NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. No definir SUPABASE_SECRET_KEY.
 
 ## Reservas mensuales
 
@@ -49,8 +78,8 @@ Almanaque / JPG abre una vista mensual (A4 horizontal) o anual (A4 vertical). Un
 Descargar JPG permite adjuntar la imagen a WhatsApp. Compartir JPG usa la función de compartir archivos del dispositivo cuando está disponible; no envía mensajes automáticamente. La consulta anual usa el mismo índice por fecha y datos compartidos que la vista mensual.
 
 
-Viajes Misioneros es un módulo independiente: almacena fecha, lugar, hermanos asignados y observaciones en tablas propias, sin afectar disponibilidad ni comensales de cocina. La nómina y los lugares se editan por ID; desactivar los oculta de nuevas asignaciones y conserva el historial. Los cambios de nombre se reflejan también en atenciones existentes. Cada módulo tiene su almanaque mensual/anual A4 y JPG. Estadísticas generales reúne por año y mes las reservas y atenciones como actividades, y presenta comensales y asignaciones de hermanos por separado. La migración 0004 solo agrega tablas e índice; las listas iniciales están vacías.
-La carga inicial conserva las localidades existentes; 0006 consolida exclusivamente los dos duplicados generados de Neuquén y Cutral Có, reasignando sus atenciones al registro previo con tilde.
+Viajes Misioneros es un módulo independiente: almacena fecha, lugar, hermanos asignados y observaciones en tablas propias, sin afectar disponibilidad ni comensales de cocina. La nómina y los lugares se editan por ID; desactivar los oculta de nuevas asignaciones y conserva el historial. Los cambios de nombre se reflejan también en atenciones existentes. Cada módulo tiene su almanaque mensual/anual A4 y JPG. Estadísticas generales reúne por año y mes las reservas y atenciones como actividades, y presenta comensales y asignaciones de hermanos por separado.
+La migración inicial de Supabase carga las localidades y hermanos de partida, con Neuquén y Cutral Có ya con tilde.
 
 El catálogo ofrece Eliminar y Recuperar. active=-1 identifica registros eliminados recuperables, conservando los nombres y referencias de atenciones pasadas; las nuevas asignaciones solo admiten active=1. El desplegable de hermanos agrega uno o varios seleccionados y permite quitarlos antes de guardar.
 
@@ -59,4 +88,4 @@ Viajes Misioneros incluye una planilla mensual de fines de semana: localidades e
 La planilla de fines de semana incluye las observaciones completas al pie, numeradas y vinculadas a sus celdas. Incluye también notas de atenciones entre semana del período seleccionado. Reserva espacio para ellas en la misma A4; si no caben completas, solicita seleccionar una localidad o acortar los textos en lugar de omitir información.
 
 ## Uso móvil e instalación
-Vista Semana en ambos módulos, predeterminada en pantallas de hasta 700 px. Consulta todas las fechas de lunes a domingo y carga los dos meses cuando corresponde. Mantiene filtros, observaciones y selección del día. Navegación inferior con cinco módulos y áreas táctiles amplias. Manifest e iconos para acceso instalado; el botón Instalar aplicación ofrece el aviso del navegador cuando está disponible e instrucciones de Android/iPhone. Requiere conexión y conserva el acceso actual de ChatGPT; no almacena datos privados sin conexión. Los usuarios propios y permisos todavía no están implementados y requieren resolver la autenticación independiente y el acceso de alojamiento antes de habilitarlos.
+Vista Semana en ambos módulos, predeterminada en pantallas de hasta 700 px. Consulta todas las fechas de lunes a domingo y carga los dos meses cuando corresponde. Mantiene filtros, observaciones y selección del día. Navegación inferior con cinco módulos y áreas táctiles amplias. Manifest e iconos para acceso instalado; el botón Instalar aplicación ofrece el aviso del navegador cuando está disponible e instrucciones de Android/iPhone. Requiere conexión e inicio de sesión; no almacena datos privados sin conexión. Los permisos por rol todavía no están implementados.

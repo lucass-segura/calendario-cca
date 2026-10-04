@@ -1,1 +1,0 @@
-ALTER TABLE `reservations` ADD `sectors_json` text;

@@ -41,3 +41,4 @@ html[data-theme=dark] .brand-logo{background:#fff}html[data-theme=dark] .brand-c
 @media print{.theme-toggle{display:none!important}html[data-theme=dark]{color-scheme:light;--ink:#213b4a;--muted:#677e8d;--line:#dfe7eb;--background:#fff}html[data-theme=dark] :is(.kitchen,.meal,.meal-date,.notes){background:#fff;color:#213b4a}}
 
 .nav-mobile-name{display:none}@media(max-width:700px){.nav-desktop-name{display:none}.nav-mobile-name{display:block}.sidebar nav button{overflow-wrap:normal}.sidebar nav button span{font-size:12px}}
+.user-menu{display:grid;gap:8px;margin-top:10px}.user-name{font-size:13px;color:#cfdee6;overflow-wrap:anywhere}.user-menu button{font-size:14px}

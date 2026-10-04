@@ -4,9 +4,6 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "CCA SECTOR 7",
   description: "Reservas de cocina y planificación de comidas de la iglesia.",
-  other: {
-    "codex-preview": "development",
-  },
   manifest: "/manifest.webmanifest",
   appleWebApp: {capable:true, title:"CCA SECTOR 7",statusBarStyle:"default"},
   icons: {

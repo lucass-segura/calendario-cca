@@ -1,1 +1,0 @@
-ALTER TABLE `reservations` ADD `repeat_rule` text;
