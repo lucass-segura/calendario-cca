@@ -1,0 +1,6 @@
+'use client';
+import {useState} from 'react';
+export function SectorPicker({options,value,onChange}:{options:string[];value:string[];onChange:(names:string[])=>void}){
+ const [extra,setExtra]=useState('');const [error,setError]=useState('');const all=Array.from(new Set([...options,...value]));
+ return <fieldset className="wide sector-picker"><legend>Sectores que participan</legend><div className="sector-choices">{all.map(s=><label key={s} className={value.includes(s)?'chosen':''}><input type="checkbox" checked={value.includes(s)} onChange={e=>{if(e.target.checked&&value.length>=12){setError('Podés elegir hasta 12 sectores.');return;}setError('');onChange(e.target.checked?[...value,s]:value.filter(n=>n!==s));}}/>{s}</label>)}</div><div className="sector-add"><label>Agregar otro sector<input maxLength={120} value={extra} placeholder="Escribí un nombre" onChange={e=>setExtra(e.target.value)}/></label><button type="button" onClick={()=>{const name=extra.trim();if(!name)return;if(value.length>=12&&!value.includes(name)){setError('Podés elegir hasta 12 sectores.');return;}onChange(Array.from(new Set([...value,name])));setExtra('');setError('');}}>Agregar</button></div><p className="helper">Elegí uno o varios sectores. La cantidad de comensales es el total de todos juntos.</p>{error&&<p className="repeat-warning" role="alert">{error}</p>}</fieldset>;
+}

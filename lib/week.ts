@@ -1,0 +1,2 @@
+export function weekDates(date:string){if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return [];const d=new Date(date+'T12:00:00Z');if(!Number.isFinite(d.getTime()))return [];d.setUTCDate(d.getUTCDate()-(d.getUTCDay()+6)%7);return Array.from({length:7},(_,i)=>{const day=new Date(d);day.setUTCDate(day.getUTCDate()+i);return day.toISOString().slice(0,10);});}
+export function shiftWeek(date:string,amount:number){const d=new Date(date+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+amount*7);return d.toISOString().slice(0,10);}

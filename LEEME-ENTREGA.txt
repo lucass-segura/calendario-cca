@@ -1,0 +1,9 @@
+CCA SECTOR 7 — Proyecto completo
+
+Incluye código, imágenes, iconos, configuración, migraciones e instrucciones. Consultá README.md. Dependencias: npm ci.
+
+No incluye credenciales, historial Git, dependencias ni archivos temporales o compilados.
+
+Los registros reales de reservas, atenciones, hermanos, lugares y configuración están en la base de datos del sitio alojado. Este ZIP no exporta esos datos.
+
+El acceso utiliza ChatGPT; usuarios propios y permisos todavía pendientes.
