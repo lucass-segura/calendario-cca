@@ -39,3 +39,27 @@ Solo administración puede modificar roles. Antes de retirar un usuario con cier
 ## Comprobaciones
 
 `pnpm test` verifica importes, horarios, requisitos de cierre, migraciones en una base temporal, restricciones de lectura/escritura, rechazo de cierres futuros, conservación del plan, historial y conflictos de revisión. `scripts/verify-kitchen-access.mjs` prueba las cinco cuentas en Supabase mediante una transacción que revierte sus datos temporales. También ejecutar lint, tipos, build y auditoría cuando corresponda.
+
+## Vista de cocina, fotos e imágenes
+
+La pantalla incorpora el logo de la Congregación, perfil personal y un avatar de cocinera dibujada. Cada persona puede subir su foto o volver al dibujo. La foto se guarda como JPEG de 320 × 320 sin EXIF/GPS en un bucket privado `profile-photos`; solo su dueña habilitada puede consultarla, reemplazarla o quitarla. No requiere la clave secreta del servidor. Para una instalación nueva, aplicar:
+
+```powershell
+node --env-file=.env.local scripts/apply-kitchen-migration.mjs 20261005020000_private_profile_photos.sql
+```
+
+El selector acepta JPG, PNG y WebP de hasta 12 MB y los reduce antes de enviarlos. El servidor vuelve a validar la imagen real, rechaza animaciones y limita dimensiones y tamaño; no acepta SVG ni confía en la extensión. La foto original no se conserva.
+
+«Imprimir», «Descargar imagen» y «WhatsApp» preparan una agenda con logo, mes, día, horario, título completo, almuerzo/merienda y comensales **previstos**. Los cierres se distinguen en verde y muestran aparte los comensales reales. El JPG excluye fotos personales y gastos. Se incluyen todos los eventos mediante páginas de hasta seis compromisos; se descarga o comparte cada página, y se imprimen todas en A4. La altura del JPG se adapta al contenido.
+
+Compartir usa el menú nativo del dispositivo para elegir WhatsApp. Si el navegador no permite compartir archivos, intenta descargar el JPG y explica cómo adjuntarlo. No envía mensajes automáticamente. La impresión abre el diálogo del navegador; la usuaria elige su impresora.
+
+El botón «Confirmar evento realizado» abre el cierre con los comensales previstos precargados, permite corregirlos y cargar el gasto en pesos. Tras guardar, la tarjeta y el botón quedan en verde. «Confirmado · Editar datos» permite corregir el cierre indicando el motivo. Se mantienen los permisos, la espera hasta el fin del evento y el historial auditado existentes.
+
+Las pruebas cubren paginación sin perder eventos ni cantidades previstas, procesamiento de fotos e aislamiento entre cuentas mediante las políticas de Storage. La revisión visual usa ejemplos aislados, sin insertar encuentros ficticios en producción.
+
+### Avatar predeterminado
+
+Archivo final: `public/cook-avatar.webp` (24 KB, 512 × 512). Generado mediante la herramienta integrada `image_gen` y optimizado para la web. Prompt final:
+
+> Use case: illustration-story. Asset type: default profile avatar for a church community kitchen app. Primary request: a kind adult female cook with a lovely friendly smiling face, depicted as a polished welcoming hand-drawn cartoon portrait. Subject: woman wearing a white chef hat and a simple apron, warm eyes, natural proportions, head and shoulders. Composition: centered square avatar, face clearly recognizable at small sizes, generous padding around hat and shoulders. Background: plain soft cream. Style: gentle clean storybook drawing, rounded shapes, subtle shading. Constraints: no lettering, no logo, no watermark, no extra people.

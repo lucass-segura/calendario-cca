@@ -57,5 +57,30 @@ test('administrator assigns access, revocation takes effect and direct escalatio
       assert.equal(audit.length,4); assert.ok(audit.every(a=>a.actor_id===admin));
       assert.equal(audit.at(-1).current.enabled,false);
     });
+    // Model Storage's metadata tables to exercise the actual photo migration's RLS.
+    await db.exec(`create schema storage;
+      create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
+      create table storage.objects(bucket_id text,name text,primary key(bucket_id,name));
+      alter table storage.objects enable row level security;
+      grant usage on schema storage to authenticated,anon;
+      grant select,insert,update,delete on storage.objects to authenticated;`);
+    await db.exec(await readFile(new URL('../supabase/migrations/20261005020000_private_profile_photos.sql',import.meta.url),'utf8'));
+    assert.equal((await db.query("select public from storage.buckets where id='profile-photos'")).rows[0].public,false);
+    await db.query("insert into storage.objects values('profile-photos',$1),('profile-photos',$2)",[kitchen+'/avatar.jpg',admin+'/avatar.jpg']);
+    await asUser(kitchen,async()=>{
+      assert.equal((await db.query('select * from storage.objects')).rows.length,1);
+      await denied(()=>db.query("insert into storage.objects values('profile-photos',$1)",[member+'/avatar.jpg']),'42501');
+      await denied(()=>db.query("update storage.objects set name=$1 where name=$2",[member+'/avatar.jpg',kitchen+'/avatar.jpg']),'42501');
+      assert.equal((await db.query("delete from storage.objects where name=$1 returning name",[admin+'/avatar.jpg'])).rows.length,0);
+      assert.equal((await db.query("delete from storage.objects where name=$1 returning name",[kitchen+'/avatar.jpg'])).rows.length,1);
+      await db.query("insert into storage.objects values('profile-photos',$1)",[kitchen+'/avatar.jpg']);
+    });
+    await asUser(fresh,async()=>{
+      assert.equal((await db.query('select * from storage.objects')).rows.length,0);
+      await denied(()=>db.query("insert into storage.objects values('profile-photos',$1)",[fresh+'/avatar.jpg']),'42501');
+    });
+    await db.exec('set role anon');
+    await denied(()=>db.query('select * from storage.objects'),'42501');
+    await db.exec('reset role');
   } finally { await db.close(); }
 });

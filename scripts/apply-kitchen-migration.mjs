@@ -3,7 +3,7 @@ import { databaseClient } from './database-client.mjs';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 const file = process.argv[2] || '20261005000000_kitchen_access_and_reports.sql';
-if (!['20261005000000_kitchen_access_and_reports.sql','20261005010000_user_permissions.sql'].includes(file)) throw new Error('Migración desconocida.');
+if (!['20261005000000_kitchen_access_and_reports.sql','20261005010000_user_permissions.sql','20261005020000_private_profile_photos.sql'].includes(file)) throw new Error('Migración desconocida.');
 const sql = await readFile(new URL('../supabase/migrations/' + file, import.meta.url), 'utf8');
 const checksum = createHash('sha256').update(sql).digest('hex');
 const client = await databaseClient();
