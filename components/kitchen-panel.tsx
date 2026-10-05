@@ -7,7 +7,7 @@ const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argent
 const money = (cents: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(cents / 100);
 const noopSubscribe = () => () => {};
 
-export function KitchenPanel({ canPrepare = false }: { canPrepare?: boolean }) {
+export function KitchenPanel({ canPrepare = false, canConfirm = false }: { canPrepare?: boolean; canConfirm?: boolean }) {
   const currentMonth = useSyncExternalStore(noopSubscribe, () => today().slice(0, 7), () => '');
   const [chosenMonth, setMonth] = useState('');
   const month = chosenMonth || currentMonth;
@@ -89,8 +89,8 @@ export function KitchenPanel({ canPrepare = false }: { canPrepare?: boolean }) {
       <p className="kitchen-quantity">Previstos: <strong>{meal.guests} comensales</strong></p>{meal.notes && <p className="notes">{meal.notes}</p>}
       {canPrepare && !meal.report && <button className="outline" disabled={saving} onClick={() => void prepare(meal)}>{meal.prepared ? 'Preparación lista (desmarcar)' : 'Marcar preparación lista'}</button>}
       {meal.report && <div className="kitchen-record"><p>Reales: <strong>{meal.report.actual_guests} comensales</strong> · Gasto: <strong>{money(meal.report.spent_cents)}</strong></p><p className="helper">Confirmado el {new Date(meal.report.confirmed_at).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })} · Versión {meal.report.revision}</p></div>}
-      <button className={meal.report ? 'outline' : 'primary'} disabled={saving || !meal.meal_type || !ended(meal.date, meal.end)} onClick={() => open(meal)}><Check size={17} />{meal.report ? 'Corregir datos reales' : 'Confirmar reunión realizada'}</button>
-      {!ended(meal.date, meal.end) && <p className="helper">Se puede confirmar después del horario de finalización.</p>}
+      {canConfirm && <button className={meal.report ? 'outline' : 'primary'} disabled={saving || !meal.meal_type || !ended(meal.date, meal.end)} onClick={() => open(meal)}><Check size={17} />{meal.report ? 'Corregir datos reales' : 'Confirmar reunión realizada'}</button>}
+      {canConfirm && !ended(meal.date, meal.end) && <p className="helper">Se puede confirmar después del horario de finalización.</p>}
       {selected?.id === meal.id && <form onSubmit={save} className="kitchen-close"><h3>{meal.report ? 'Corregir el cierre' : 'Registrar los datos reales'}</h3><label className="kitchen-checkbox"><input type="checkbox" checked={performed} required onChange={e => setPerformed(e.target.checked)} />Confirmo que la reunión se realizó</label><div className="form-grid"><label>Comensales reales<input type="number" min="0" max="10000" step="1" required value={guests} onChange={e => setGuests(e.target.value)} disabled={saving} /></label><label>Gasto total (pesos argentinos)<input type="text" inputMode="decimal" placeholder="Ej. 12500,50" required value={spent} onChange={e => setSpent(e.target.value)} disabled={saving} /></label></div><p className="helper">Si no hubo gasto, ingresá 0. La cantidad prevista se conserva para comparar después.</p>{meal.report && <label>Motivo de la corrección<textarea required maxLength={1000} value={note} onChange={e => setNote(e.target.value)} disabled={saving} /></label>}{formError && <p role="alert" className="error">{formError}</p>}<div className="modal-actions"><button type="button" disabled={saving} onClick={() => setSelected(null)}>Volver</button><button className="primary" disabled={saving}>{saving ? 'Guardando…' : 'Guardar confirmación'}</button></div></form>}
     </article>)}
   </section>;

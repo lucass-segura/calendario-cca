@@ -1,14 +1,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { currentAccess } from './auth/access';
+import type { Permission } from './permissions';
 
-/** Default access is organization-only; kitchen access must be explicitly requested. RLS still applies. */
-export async function authedClient(access: 'member' | 'kitchen' = 'member'): Promise<SupabaseClient | null> {
+/** Every module requests its permission; omitted permission checks enabled authentication only. RLS still applies. */
+export async function authedClient(access?: Permission): Promise<SupabaseClient | null> {
   const session = await currentAccess();
-  if (!session || (access === 'member' && session.profile.role !== 'member')) return null;
+  if (!session || (access && !session.profile.permissions.includes(access))) return null;
   return session.supabase;
 }
 
-export const unauthorized = () => Response.json({ error: 'Necesitás iniciar sesión.' }, { status: 401 });
+export const unauthorized = () => Response.json({ error: 'Necesitás una cuenta con permiso para esta acción.' }, { status: 403 });
 
 const PAGE = 1000;
 

@@ -28,7 +28,7 @@ for (const [username, full_name] of accounts) {
   const password = randomBytes(18).toString('base64url');
   const { data, error } = await admin.auth.admin.createUser({ email: `${username}@users.cca-sector7.app`, password, email_confirm: true });
   if (error) throw new Error(`No se pudo crear ${username}: ${error.message}`);
-  const { error: profileError } = await admin.from('profiles').insert({ id: data.user.id, username, full_name, role: 'kitchen' });
+  const { error: profileError } = await admin.from('profiles').insert({ id: data.user.id, username, full_name, role: 'kitchen', permissions: ['kitchen.read','kitchen.confirm'] });
   if (profileError) {
     const { error: rollbackError } = await admin.auth.admin.deleteUser(data.user.id);
     if (rollbackError) throw new Error(`Falló el perfil de ${username} y su reversión. Revisá el usuario en Supabase.`);

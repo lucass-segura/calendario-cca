@@ -24,7 +24,7 @@ node --env-file=.env.local scripts/create-kitchen-users.mjs
 node --env-file=.env.local scripts/verify-kitchen-access.mjs
 ```
 
-`DATABASE_URL` y `SUPABASE_SECRET_KEY` son únicamente locales. El certificado raíz descargado de Supabase está en `outputs/supabase-ca.crt`; se puede indicar otro mediante `DATABASE_SSL_CA`. La conexión mantiene TLS con verificación del certificado y del servidor. No configurar DATABASE_URL ni la clave secreta en Vercel para la aplicación.
+`DATABASE_URL` es únicamente local. `SUPABASE_SECRET_KEY` es privada del servidor; el panel ADM la necesita también en Vercel para crear cuentas. El certificado raíz descargado de Supabase está en `outputs/supabase-ca.crt`; se puede indicar otro mediante `DATABASE_SSL_CA`. La conexión mantiene TLS con verificación del certificado y del servidor. No configurar DATABASE_URL en Vercel. Ver [USUARIOS.md](USUARIOS.md) para la creación desde ADM.
 
 Las cuentas preparadas son `maria.eugenia`, `norma`, `gladis`, `mirian` y `margarita`. Las contraseñas generadas están solo en `outputs/cocina-accesos-privados.json`, excluido de Git. Entregar a cada hermana únicamente sus datos por un canal privado. El script no sobreescribe cuentas existentes. Estas claves no expiran automáticamente; para rotarlas se utiliza el script administrativo o el panel de Supabase.
 

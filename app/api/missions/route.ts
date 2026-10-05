@@ -5,7 +5,7 @@ import { authedClient, fetchAll, unauthorized } from '../../../lib/api';
 type TripRow = { id: string; date: string; place_id: string; people_json: string[]; notes: string; updated: string };
 
 export async function GET(request: Request) {
-  const supabase = await authedClient();
+  const supabase = await authedClient('missions.read');
   if (!supabase) return unauthorized();
   let range;
   try { range = dateRange(request); } catch (e) { return Response.json({ error: (e as Error).message }, { status: 400 }); }
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
 }
 
 async function write(request: Request, edit: boolean) {
-  const supabase = await authedClient();
+  const supabase = await authedClient('missions.write');
   if (!supabase) return unauthorized();
   if (!sameOrigin(request)) return Response.json({ error: 'Solicitud no permitida.' }, { status: 403 });
   let b;
@@ -77,7 +77,7 @@ export const POST = (r: Request) => write(r, false);
 export const PUT = (r: Request) => write(r, true);
 
 export async function DELETE(request: Request) {
-  const supabase = await authedClient();
+  const supabase = await authedClient('missions.write');
   if (!supabase) return unauthorized();
   if (!sameOrigin(request)) return Response.json({ error: 'Solicitud no permitida.' }, { status: 403 });
   const id = new URL(request.url).searchParams.get('id');

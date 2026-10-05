@@ -17,5 +17,11 @@ export async function signIn(_previous: LoginState, formData: FormData): Promise
   const { error } = await supabase.auth.signInWithPassword({ email: usernameToEmail(username), password });
   if (error) return { error: GENERIC_ERROR };
 
+  const { data: profile, error: profileError } = await supabase.from('profiles').select('enabled').eq('username', username).maybeSingle();
+  if (profileError || !profile?.enabled) {
+    await supabase.auth.signOut();
+    return { error: 'Tu cuenta no está habilitada. Consultá al administrador.' };
+  }
+
   redirect('/');
 }

@@ -8,7 +8,7 @@ function getScope(request: Request) {
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const supabase = await authedClient();
+  const supabase = await authedClient('reservations.write');
   if (!supabase) return unauthorized();
   if (!sameOrigin(request)) return Response.json({ error: 'Solicitud no permitida.' }, { status: 403 });
   const { id } = await params;
@@ -34,7 +34,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const supabase = await authedClient();
+  const supabase = await authedClient('reservations.write');
   if (!supabase) return unauthorized();
   if (!sameOrigin(request)) return Response.json({ error: 'Solicitud no permitida.' }, { status: 403 });
   const { id } = await params;
@@ -59,7 +59,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const supabase = await authedClient();
+  const supabase = await authedClient('reservations.write');
   if (!supabase) return unauthorized();
   if (!sameOrigin(request)) return Response.json({ error: 'Solicitud no permitida.' }, { status: 403 });
   const { id } = await params;

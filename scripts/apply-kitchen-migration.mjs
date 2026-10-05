@@ -2,7 +2,8 @@
 import { databaseClient } from './database-client.mjs';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-const file = '20261005000000_kitchen_access_and_reports.sql';
+const file = process.argv[2] || '20261005000000_kitchen_access_and_reports.sql';
+if (!['20261005000000_kitchen_access_and_reports.sql','20261005010000_user_permissions.sql'].includes(file)) throw new Error('Migración desconocida.');
 const sql = await readFile(new URL('../supabase/migrations/' + file, import.meta.url), 'utf8');
 const checksum = createHash('sha256').update(sql).digest('hex');
 const client = await databaseClient();
@@ -15,13 +16,13 @@ try {
   const previous = await client.query('select checksum from public.cca_schema_migrations where name=$1', [file]);
   if (previous.rows.length) {
     if (previous.rows[0].checksum !== checksum) throw new Error('La migración ya aplicada cambió. Se necesita una migración nueva.');
-    await client.query('rollback'); console.log('La migración de cocina ya estaba aplicada.');
+    await client.query('rollback'); console.log('La migración ya estaba aplicada.');
   } else {
     // The file also supports the SQL editor; this runner owns the transaction.
     const body = sql.replace(/^begin;\s*/i, '').replace(/commit;\s*$/i, '');
     await client.query(body);
     await client.query('insert into public.cca_schema_migrations(name,checksum) values ($1,$2)', [file, checksum]);
-    await client.query('commit'); console.log('Migración de cocina aplicada en una transacción.');
+    await client.query('commit'); console.log('Migración aplicada en una transacción.');
   }
 } catch (error) {
   await client.query('rollback').catch(() => {});

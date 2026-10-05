@@ -1,7 +1,7 @@
 // Admin script (local only, never imported by the app).
 //   node --env-file=.env.local scripts/create-user.mjs <username> <password> "<Full Name>"
 //   node --env-file=.env.local scripts/create-user.mjs --reset-password <username> <password>
-// Needs NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY (never set the secret key in Vercel).
+// Needs NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY (server-only).
 import { createClient } from '@supabase/supabase-js';
 
 const DOMAIN = 'users.cca-sector7.app'; // keep in sync with lib/auth/username.ts
@@ -58,7 +58,7 @@ if (args[0] === '--reset-password') {
   const { data, error } = await admin.auth.admin.createUser({ email: `${username}@${DOMAIN}`, password, email_confirm: true });
   if (error) fail(`Could not create the auth user: ${error.message}`);
 
-  const { error: profileError } = await admin.from('profiles').insert({ id: data.user.id, username, full_name: fullName, role });
+  const { error: profileError } = await admin.from('profiles').insert({ id: data.user.id, username, full_name: fullName, role, permissions: role === 'kitchen' ? ['kitchen.read','kitchen.confirm'] : ['reservations.read','reservations.write','kitchen.read','kitchen.confirm','missions.read','missions.write','stats.read','settings.write'] });
   if (profileError) {
     await admin.auth.admin.deleteUser(data.user.id);
     fail(`Could not create the profile (auth user rolled back): ${profileError.message}`);

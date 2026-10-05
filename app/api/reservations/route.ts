@@ -3,7 +3,7 @@ import { monthlyDates, type MonthlyRule } from '../../../lib/recurrence';
 import { authedClient, fetchAll, reservationOut, unauthorized } from '../../../lib/api';
 
 export async function GET(request: Request) {
-  const supabase = await authedClient();
+  const supabase = await authedClient('reservations.read');
   if (!supabase) return unauthorized();
   const query = new URL(request.url).searchParams;
   const month = query.get('month');
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const supabase = await authedClient();
+  const supabase = await authedClient('reservations.write');
   if (!supabase) return unauthorized();
   if (!sameOrigin(request)) return Response.json({ error: 'Solicitud no permitida.' }, { status: 403 });
   let d;

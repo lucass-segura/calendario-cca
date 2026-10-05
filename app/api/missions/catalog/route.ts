@@ -4,7 +4,7 @@ import { authedClient, fetchAll, likeLiteral, unauthorized } from '../../../../l
 const tables = { people: 'mission_people', places: 'mission_places' } as const;
 
 export async function GET() {
-  const supabase = await authedClient();
+  const supabase = await authedClient('missions.read');
   if (!supabase) return unauthorized();
   try {
     const [people, places] = await Promise.all([
@@ -19,7 +19,7 @@ export async function GET() {
 }
 
 async function write(request: Request, edit: boolean) {
-  const supabase = await authedClient();
+  const supabase = await authedClient('missions.write');
   if (!supabase) return unauthorized();
   if (!sameOrigin(request)) return Response.json({ error: 'Solicitud no permitida.' }, { status: 403 });
   let body;
@@ -54,7 +54,7 @@ export const POST = (r: Request) => write(r, false);
 export const PUT = (r: Request) => write(r, true);
 
 export async function DELETE(request: Request) {
-  const supabase = await authedClient();
+  const supabase = await authedClient('missions.write');
   if (!supabase) return unauthorized();
   if (!sameOrigin(request)) return Response.json({ error: 'Solicitud no permitida.' }, { status: 403 });
   const query = new URL(request.url).searchParams;

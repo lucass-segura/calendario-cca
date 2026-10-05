@@ -1,3 +1,5 @@
+La administración de usuarios y permisos con casillas está documentada en [USUARIOS.md](USUARIOS.md).
+
 # Cocina en comunidad
 
 El acceso limitado de cocina, los tipos de comida y el registro de comensales reales y gastos están documentados en [COCINA.md](COCINA.md). Se incorpora una nueva migración con roles: el modelo anterior de acceso universal descrito más abajo queda reemplazado por los permisos `member` y `kitchen`.
@@ -6,7 +8,7 @@ Aplicación modular para coordinar la cocina de la iglesia. Interfaz en español
 
 ## Datos y acceso
 
-La aplicación es Next.js (App Router) desplegable en Vercel. Los datos y la autenticación están en Supabase (Postgres + Auth). Las reservas, atenciones, nómina, lugares y configuración se guardan en tablas con RLS: solo los usuarios autenticados pueden leer y modificar; el acceso anónimo no existe. Todos los miembros pueden modificar todas las reservas y la configuración. No hay roles diferenciados en esta versión.
+La aplicación es Next.js (App Router) desplegable en Vercel. Los datos y la autenticación están en Supabase (Postgres + Auth). Las reservas, atenciones, nómina, lugares y configuración se guardan en tablas con RLS: solo los usuarios autenticados pueden leer y modificar; el acceso anónimo no existe. Los accesos se asignan individualmente desde el perfil ADM; ver [USUARIOS.md](USUARIOS.md).
 
 Las reservas ocupan un horario dentro de un mismo día. La prevención de superposición se aplica dentro de funciones de Postgres (RPC `create_reservations`, `update_reservation_single`, `update_reservation_series`) que serializan las escrituras con un bloqueo asesor transaccional, de modo que dos solicitudes simultáneas no pueden crear cruces. Los horarios incluyen preparación y limpieza. La edición restablece el estado de preparación. La lista del mes se actualiza cada 30 segundos o manualmente.
 
@@ -22,12 +24,12 @@ node --env-file=.env.local scripts/create-user.mjs <usuario> <contraseña> "<Nom
 node --env-file=.env.local scripts/create-user.mjs --reset-password <usuario> <contraseña>
 ```
 
-El usuario admite 3 a 32 caracteres: letras minúsculas, números, punto, guion y guion bajo. La contraseña debe tener al menos 8 caracteres. El script usa SUPABASE_SECRET_KEY, que es solo local: no se configura en Vercel, no se publica y la aplicación no la lee.
+El usuario admite 3 a 32 caracteres: letras minúsculas, números, punto, guion y guion bajo. La contraseña debe tener al menos 8 caracteres. El script usa SUPABASE_SECRET_KEY, privada del servidor: también se configura en Vercel para crear cuentas desde ADM; nunca se publica.
 
 ### Variables de entorno
 
 - NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: obligatorias en local (.env.local) y en Vercel. Ver .env.example.
-- SUPABASE_SECRET_KEY: solo local, para scripts/create-user.mjs.
+- SUPABASE_SECRET_KEY: privada del servidor, para crear usuarios desde ADM y scripts locales.
 
 Los datos que existían en el D1 de ChatGPT Sites no se migraron: la base de Supabase comienza vacía, salvo las listas iniciales de lugares y hermanos.
 
@@ -51,7 +53,7 @@ Next.js + Supabase + Vercel. Requiere Node 22.13 o superior.
 3. Aplicar las migraciones de supabase/migrations al proyecto de Supabase (con la CLI de Supabase o desde el editor SQL, en orden de nombre). Las migraciones publicadas deben permanecer inmutables; los cambios requieren una nueva.
 4. pnpm dev (desarrollo), pnpm build y pnpm start (producción), pnpm lint.
 
-Para publicar en Vercel, importar el repositorio y definir NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. No definir SUPABASE_SECRET_KEY.
+Para publicar en Vercel, importar el repositorio y definir NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. Para crear usuarios desde ADM, definir también SUPABASE_SECRET_KEY como variable privada del servidor.
 
 ## Reservas mensuales
 

@@ -8,7 +8,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   try { report = validateReport(await request.json()); }
   catch (error) { return Response.json({ error: error instanceof Error ? error.message : 'Datos inválidos.' }, { status: 400 }); }
   try {
-    const supabase = await authedClient('kitchen');
+    const supabase = await authedClient('kitchen.confirm');
     if (!supabase) return Response.json({ error: 'Necesitás una cuenta habilitada.' }, { status: 403 });
     const { id } = await params;
     const { data, error } = await supabase.rpc('confirm_kitchen_event', { p_id: id, p_actual_guests: report.actual_guests, p_spent_cents: report.spent_cents, p_expected_revision: report.expected_revision, p_correction_note: report.correction_note });

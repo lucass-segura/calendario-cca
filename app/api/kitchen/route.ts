@@ -3,7 +3,7 @@ import type { KitchenMeal, KitchenReport } from '../../../lib/kitchen';
 
 export async function GET(request: Request) {
   try {
-    const supabase = await authedClient('kitchen');
+    const supabase = await authedClient('kitchen.read');
     if (!supabase) return Response.json({ error: 'Necesitás una cuenta habilitada.' }, { status: 403 });
     const month = new URL(request.url).searchParams.get('month');
     if (!month || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return Response.json({ error: 'Elegí un mes válido.' }, { status: 400 });

@@ -12,7 +12,7 @@ pnpm install --frozen-lockfile
 pnpm dev --hostname 127.0.0.1
 ```
 
-Antes de iniciar, completar `.env.local` con la URL y la clave pública de tu proyecto de Supabase. El archivo ya está creado y excluido de Git. No dejar los ejemplos entre `< >`. La clave secreta solo hace falta para el script administrativo de creación de usuarios; no es necesaria para ejecutar la aplicación. No pegar claves en código ni subirlas a GitHub.
+Antes de iniciar, completar `.env.local` con la URL y la clave pública de tu proyecto de Supabase. El archivo ya está creado y excluido de Git. No dejar los ejemplos entre `< >`. La clave secreta se usa en el servidor para crear usuarios desde ADM o scripts; la edición de permisos no la necesita. No pegar claves en código ni subirlas a GitHub.
 
 Abrir http://127.0.0.1:3000. Detener con Ctrl+C. El acceso y los datos requieren Supabase configurado y un usuario existente. Si el proyecto de Supabase ya tiene las migraciones, no volver a ejecutarlas; consultar README.md para configurar una base nueva.
 

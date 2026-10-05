@@ -17,7 +17,7 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  const supabase = await authedClient();
+  const supabase = await authedClient('settings.write');
   if (!supabase) return unauthorized();
   if (!sameOrigin(request)) return Response.json({ error: 'Solicitud no permitida.' }, { status: 403 });
   let body;
