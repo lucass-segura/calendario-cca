@@ -82,5 +82,17 @@ test('administrator assigns access, revocation takes effect and direct escalatio
     await db.exec('set role anon');
     await denied(()=>db.query('select * from storage.objects'),'42501');
     await db.exec('reset role');
+    await db.exec(await readFile(new URL('../supabase/migrations/20261005040000_kitchen_statistics_access.sql',import.meta.url),'utf8'));
+    await asUser(admin,async()=>{await save(fresh,'nuevo',['reservations.read','missions.read','stats.read']);});
+    await asUser(fresh,async()=>{
+      const reports=(await db.query('select * from public.kitchen_reports')).rows;
+      assert.equal(reports.length,1); assert.equal(reports[0].actual_guests,9); assert.equal(reports[0].spent_cents,10000);
+      await denied(()=>db.query("select public.confirm_kitchen_event('food',8,20000,1,'corrección')"),'42501');
+    });
+    await asUser(kitchen,async()=>{assert.equal((await db.query('select * from public.kitchen_reports')).rows.length,1);});
+    await asUser(admin,async()=>{await save(fresh,'nuevo',[]);});
+    await asUser(fresh,async()=>{assert.equal((await db.query('select * from public.kitchen_reports')).rows.length,0);});
+    await asUser(admin,async()=>{await save(fresh,'nuevo',['reservations.read','missions.read','stats.read'],false);});
+    await asUser(fresh,async()=>{assert.equal((await db.query('select * from public.kitchen_reports')).rows.length,0);});
   } finally { await db.close(); }
 });

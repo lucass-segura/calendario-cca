@@ -75,3 +75,9 @@ Migración: 20261005030000_private_password_reset.sql. Las cuentas existentes ma
 ## Almanaque de cocina
 
 Vista almanaque abre una imagen mensual o anual con un selector de mes o año. Consulta solo los compromisos de comida mediante el permiso kitchen.read. La vista mensual indica evento, almuerzo o merienda y comensales previstos; la anual resume los días con compromisos. Se conserva la impresión A4 y la descarga JPG. El selector de eventos permite volver a sus detalles en la agenda. Si un día tiene más de dos encuentros, la imagen indica cuántos más hay y los detalles siguen disponibles en la agenda.
+
+## Estadísticas con cierres de cocina
+
+Estadísticas generales muestra comensales previstos, comensales confirmados y gastos registrados en pesos argentinos. Los totales anuales y mensuales usan la fecha del evento, y el detalle muestra el último cierre de cada encuentro. Las correcciones sustituyen los valores anteriores sin duplicar eventos. Los eventos sin cierre no aportan asistencia ni gastos reales. La pantalla actualiza sus datos cada minuto y permite actualización manual.
+
+La API de cierres exige stats.read. La política de lectura permite kitchen.read o stats.read, sin ampliar permisos de edición. Migración: 20261005040000_kitchen_statistics_access.sql.
