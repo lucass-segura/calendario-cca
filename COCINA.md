@@ -71,3 +71,7 @@ Cada persona puede usar Cambiar contraseña desde su perfil. Se pide y verifica 
 En Usuarios y permisos, un administrador puede confirmar Restablecer contraseña. Vuelve al DNI registrado; puede registrar o corregir el DNI en ese diálogo. Una cuenta deshabilitada sigue deshabilitada. Los DNI no se devuelven al navegador: están en una tabla con RLS y permisos exclusivos para la clave privada del servidor. El historial registra administrador, cuenta y fecha, sin incluir DNI ni contraseñas. Producción necesita SUPABASE_SECRET_KEY, únicamente en el entorno del servidor de Vercel.
 
 Migración: 20261005030000_private_password_reset.sql. Las cuentas existentes mantienen sus permisos. Usar el DNI es una preferencia solicitada por el administrador; se recomienda reemplazarlo por una contraseña personal después del ingreso.
+
+## Almanaque de cocina
+
+Vista almanaque abre una imagen mensual o anual con un selector de mes o año. Consulta solo los compromisos de comida mediante el permiso kitchen.read. La vista mensual indica evento, almuerzo o merienda y comensales previstos; la anual resume los días con compromisos. Se conserva la impresión A4 y la descarga JPG. El selector de eventos permite volver a sus detalles en la agenda. Si un día tiene más de dos encuentros, la imagen indica cuántos más hay y los detalles siguen disponibles en la agenda.
