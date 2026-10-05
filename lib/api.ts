@@ -1,11 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from './supabase/server';
+import { currentAccess } from './auth/access';
 
-/** Returns the request-scoped Supabase client (RLS enforced) or null when nobody is signed in. */
-export async function authedClient(): Promise<SupabaseClient | null> {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  return data?.claims ? supabase : null;
+/** Default access is organization-only; kitchen access must be explicitly requested. RLS still applies. */
+export async function authedClient(access: 'member' | 'kitchen' = 'member'): Promise<SupabaseClient | null> {
+  const session = await currentAccess();
+  if (!session || (access === 'member' && session.profile.role !== 'member')) return null;
+  return session.supabase;
 }
 
 export const unauthorized = () => Response.json({ error: 'Necesitás iniciar sesión.' }, { status: 401 });

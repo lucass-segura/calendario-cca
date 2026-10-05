@@ -20,13 +20,14 @@ Abrir http://127.0.0.1:3000. Detener con Ctrl+C. El acceso y los datos requieren
 
 Todo el trabajo se realiza por Codex en `main`. Codex prepara los cambios, revisa el diff y ejecuta las comprobaciones aplicables. Cuando estén listos, pregunta si querés subir ese conjunto de cambios a `main`. La publicación requiere tu respuesta afirmativa. Las instrucciones permanentes están en `AGENTS.md`.
 
-Este proyecto todavía no tiene una suite de tests automatizados. Lint, tipos y compilación son comprobaciones técnicas; las pruebas funcionales se realizan según el cambio y requieren Supabase cuando corresponda. Los problemas pendientes se informan antes de pedir la aprobación.
+El proyecto incluye `pnpm test` para validaciones de cocina y permisos en una base temporal. Lint, tipos y compilación son comprobaciones adicionales; las pruebas funcionales se realizan según el cambio y requieren Supabase cuando corresponda. Los problemas pendientes se informan antes de pedir la aprobación.
 
 Comandos de referencia que ejecutará Codex:
 
 ```powershell
 # Editar archivos y comprobar:
 pnpm lint
+pnpm test
 pnpm exec tsc --noEmit
 pnpm build
 git status

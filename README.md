@@ -1,5 +1,7 @@
 # Cocina en comunidad
 
+El acceso limitado de cocina, los tipos de comida y el registro de comensales reales y gastos están documentados en [COCINA.md](COCINA.md). Se incorpora una nueva migración con roles: el modelo anterior de acceso universal descrito más abajo queda reemplazado por los permisos `member` y `kitchen`.
+
 Aplicación modular para coordinar la cocina de la iglesia. Interfaz en español, calendario mensual, reservas por sector, responsable y contacto, servicio de comida o uso físico, comensales, observaciones, edición y cancelación. Plan de cocina imprimible con estado de preparación. Nombre de iglesia y sectores editables.
 
 ## Datos y acceso

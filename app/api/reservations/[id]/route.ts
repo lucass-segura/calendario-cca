@@ -21,7 +21,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     return Response.json({ error: e instanceof Error ? e.message : 'Datos inválidos.' }, { status: 400 });
   }
   try {
-    const p_data = { title: d.title, sector: d.sector, sectors: d.sectors, responsible: d.responsible, contact: d.contact, date: d.date, start: d.start, end: d.end, service: d.service, guests: d.guests, notes: d.notes, updated: new Date().toISOString() };
+    const p_data = { title: d.title, sector: d.sector, sectors: d.sectors, responsible: d.responsible, contact: d.contact, date: d.date, start: d.start, end: d.end, service: d.service, meal_type: d.meal_type, guests: d.guests, notes: d.notes, updated: new Date().toISOString() };
     const { data, error } = await supabase.rpc(scope === 'series' ? 'update_reservation_series' : 'update_reservation_single', { p_id: id, p_data });
     if (error) throw error;
     const count = data as number;

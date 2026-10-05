@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     const incoming = dates.map(date => ({ id: crypto.randomUUID(), date }));
     const series = rule ? crypto.randomUUID() : null;
     const { data, error } = await supabase.rpc('create_reservations', {
-      p_data: { title: d.title, sector: d.sector, sectors: d.sectors, responsible: d.responsible, contact: d.contact, start: d.start, end: d.end, service: d.service, guests: d.guests, notes: d.notes, updated: new Date().toISOString() },
+      p_data: { title: d.title, sector: d.sector, sectors: d.sectors, responsible: d.responsible, contact: d.contact, start: d.start, end: d.end, service: d.service, meal_type: d.meal_type, guests: d.guests, notes: d.notes, updated: new Date().toISOString() },
       p_items: incoming,
       p_series_id: series,
       p_rule: rule,

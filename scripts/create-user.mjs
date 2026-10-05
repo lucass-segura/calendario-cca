@@ -13,6 +13,10 @@ if (!url || !key) fail('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SECRET_KEY 
 
 const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 const args = process.argv.slice(2);
+const roleIndex = args.indexOf('--role');
+const role = roleIndex >= 0 ? args[roleIndex + 1] : 'member';
+if (!['member', 'kitchen'].includes(role)) fail('Role must be member or kitchen.');
+if (roleIndex >= 0) args.splice(roleIndex, 2);
 
 function fail(message) {
   console.error(message);
@@ -54,7 +58,7 @@ if (args[0] === '--reset-password') {
   const { data, error } = await admin.auth.admin.createUser({ email: `${username}@${DOMAIN}`, password, email_confirm: true });
   if (error) fail(`Could not create the auth user: ${error.message}`);
 
-  const { error: profileError } = await admin.from('profiles').insert({ id: data.user.id, username, full_name: fullName });
+  const { error: profileError } = await admin.from('profiles').insert({ id: data.user.id, username, full_name: fullName, role });
   if (profileError) {
     await admin.auth.admin.deleteUser(data.user.id);
     fail(`Could not create the profile (auth user rolled back): ${profileError.message}`);
