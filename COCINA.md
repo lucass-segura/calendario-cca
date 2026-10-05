@@ -63,3 +63,11 @@ Las pruebas cubren paginación sin perder eventos ni cantidades previstas, proce
 Archivo final: `public/cook-avatar.webp` (24 KB, 512 × 512). Generado mediante la herramienta integrada `image_gen` y optimizado para la web. Prompt final:
 
 > Use case: illustration-story. Asset type: default profile avatar for a church community kitchen app. Primary request: a kind adult female cook with a lovely friendly smiling face, depicted as a polished welcoming hand-drawn cartoon portrait. Subject: woman wearing a white chef hat and a simple apron, warm eyes, natural proportions, head and shoulders. Composition: centered square avatar, face clearly recognizable at small sizes, generous padding around hat and shoulders. Background: plain soft cream. Style: gentle clean storybook drawing, rounded shapes, subtle shading. Constraints: no lettering, no logo, no watermark, no extra people.
+
+## Contraseñas y restablecimiento
+
+Cada persona puede usar Cambiar contraseña desde su perfil. Se pide y verifica expresamente la contraseña actual, una nueva de al menos 8 caracteres y su repetición. La nueva clave nunca se guarda en los perfiles ni se muestra en la administración.
+
+En Usuarios y permisos, un administrador puede confirmar Restablecer contraseña. Vuelve al DNI registrado; puede registrar o corregir el DNI en ese diálogo. Una cuenta deshabilitada sigue deshabilitada. Los DNI no se devuelven al navegador: están en una tabla con RLS y permisos exclusivos para la clave privada del servidor. El historial registra administrador, cuenta y fecha, sin incluir DNI ni contraseñas. Producción necesita SUPABASE_SECRET_KEY, únicamente en el entorno del servidor de Vercel.
+
+Migración: 20261005030000_private_password_reset.sql. Las cuentas existentes mantienen sus permisos. Usar el DNI es una preferencia solicitada por el administrador; se recomienda reemplazarlo por una contraseña personal después del ingreso.

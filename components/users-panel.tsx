@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { Eye, EyeOff, Plus, ShieldCheck, X } from 'lucide-react';
+import { Eye, EyeOff, Plus, RotateCcw, ShieldCheck, X } from 'lucide-react';
 import { permissionOptions, togglePermission, type Permission } from '../lib/permissions';
 
 type User = { id: string; username: string; full_name: string; permissions: Permission[]; enabled: boolean };
@@ -17,6 +17,22 @@ export function UsersPanel() {
   const [error, setError] = useState('');
   const [formError, setFormError] = useState('');
   const [notice, setNotice] = useState('');
+  const [resetUser, setResetUser] = useState<User | null>(null);
+  const [resetDni, setResetDni] = useState('');
+  const [resetError, setResetError] = useState('');
+  async function resetPassword(event: React.FormEvent) {
+    event.preventDefault();
+    if (!resetUser) return;
+    setSaving(true); setResetError(''); setNotice('');
+    try {
+      const response = await fetch('/api/users/' + resetUser.id + '/reset-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dni: resetDni }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+      setNotice('Contraseña de ' + resetUser.full_name + ' restablecida. Ingresará con su DNI y podrá cambiarla desde su perfil.' + (result.warning ? ' ' + result.warning : ''));
+      setResetUser(null); setResetDni('');
+    } catch (cause) { setResetError(cause instanceof Error ? cause.message : 'No pudimos restablecer la contraseña.'); }
+    finally { setSaving(false); }
+  }
   const load = useCallback(async (signal?: AbortSignal) => {
     try {
       const response = await fetch('/api/users', { cache: 'no-store', signal });
@@ -46,7 +62,17 @@ export function UsersPanel() {
     {error && <p className="error" role="alert">{error}<button onClick={() => void load()}>Reintentar</button></p>}
     {loading && <p role="status">Cargando usuarios…</p>}
     {!loading && !error && !canCreate && <p className="helper kitchen-warning">La creación de cuentas necesita configurar la clave privada de Supabase en el servidor. Podés modificar los permisos de las cuentas existentes.</p>}
-    {!loading && !error && <div className="users-list">{users.map(user => <article className="user-access-card" key={user.id}><div><h2>{user.full_name}</h2><p className="subtitle">{user.username}</p></div><span className={'badge ' + (user.enabled ? 'prepared' : 'space')}>{user.enabled ? 'Habilitada' : 'Deshabilitada'}</span><p className="helper">{user.permissions.includes('users.manage') ? 'Administrador · Todos los accesos' : permissionOptions.filter(p => user.permissions.includes(p.key)).map(p => p.label).join(' · ') || 'Sin accesos asignados'}</p><button className="outline" onClick={() => open(user)}><ShieldCheck size={17}/>Editar permisos</button></article>)}</div>}
+    {!loading && !error && <div className="users-list">{users.map(user => <article className="user-access-card" key={user.id}><div><h2>{user.full_name}</h2><p className="subtitle">{user.username}</p></div><span className={'badge ' + (user.enabled ? 'prepared' : 'space')}>{user.enabled ? 'Habilitada' : 'Deshabilitada'}</span><p className="helper">{user.permissions.includes('users.manage') ? 'Administrador · Todos los accesos' : permissionOptions.filter(p => user.permissions.includes(p.key)).map(p => p.label).join(' · ') || 'Sin accesos asignados'}</p><button className="outline" onClick={() => open(user)}><ShieldCheck size={17}/>Editar permisos</button><button className="outline" disabled={!canCreate || saving} onClick={() => { setResetUser(user); setResetDni(''); setResetError(''); setNotice(''); }}><RotateCcw size={17}/>Restablecer contraseña</button></article>)}</div>}
+    {resetUser && <div className="modal-backdrop"><section className="modal users-modal" role="dialog" aria-modal="true" aria-labelledby="reset-title" onKeyDown={event => {
+      if (event.key === 'Escape' && !saving) { setResetUser(null); setResetDni(''); }
+      if (event.key === 'Tab') { const fields = event.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled)'); const first = fields[0], last = fields[fields.length - 1]; if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); } else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); } }
+    }}><div className="modal-header"><h2 id="reset-title">Restablecer contraseña</h2><button aria-label="Cerrar" disabled={saving} onClick={() => { setResetUser(null); setResetDni(''); }}><X/></button></div><form onSubmit={resetPassword}>
+      <p>La contraseña de <strong>{resetUser.full_name}</strong> ({resetUser.username}) volverá a ser su DNI. La clave anterior dejará de servir.</p>
+      <label>DNI de restablecimiento (opcional)<input autoFocus type="password" inputMode="numeric" pattern="[0-9]{7,8}" maxLength={8} autoComplete="off" value={resetDni} disabled={saving} onChange={event => setResetDni(event.target.value)}/><span className="helper">Dejalo vacío para usar el DNI registrado. Completalo solo la primera vez o para corregirlo. No se mostrará después.</span></label>
+      {!resetUser.enabled && <p className="helper">La cuenta seguirá deshabilitada. Para permitir el ingreso, habilitala desde Editar permisos.</p>}
+      {resetError && <p role="alert" className="error">{resetError}</p>}
+      <div className="modal-actions"><button type="button" disabled={saving} onClick={() => { setResetUser(null); setResetDni(''); }}>Cancelar</button><button className="primary" disabled={saving}>{saving ? 'Restableciendo…' : 'Confirmar restablecimiento'}</button></div>
+    </form></section></div>}
     {draft && <div className="modal-backdrop"><section className="modal users-modal" role="dialog" aria-modal="true" aria-labelledby="users-title" onKeyDown={e => { if(e.key === 'Escape' && !saving) setDraft(null); if(e.key === 'Tab') { const fields=e.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled)'); const first=fields[0],last=fields[fields.length-1]; if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last?.focus(); } else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first?.focus(); } } }}><div className="modal-header"><div><p className="eyebrow">ACCESOS PERSONALES</p><h2 id="users-title">{draft.id ? 'Editar usuario' : 'Nuevo usuario'}</h2></div><button aria-label="Cerrar" disabled={saving} onClick={() => setDraft(null)}><X/></button></div><form onSubmit={save}>
       <div className="form-grid"><label>Nombre completo<input autoFocus required maxLength={120} autoComplete="off" value={draft.full_name} disabled={saving} onChange={e => setDraft({...draft,full_name:e.target.value})}/></label><label>Usuario de ingreso<input required minLength={3} maxLength={32} pattern="[a-zA-Z0-9._\-]{3,32}" autoComplete="off" disabled={saving || !!draft.id} value={draft.username} onChange={e => setDraft({...draft,username:e.target.value.toLowerCase()})}/></label></div>
       {!draft.id && <label>Contraseña inicial<div className="user-password"><input type={showPassword ? 'text' : 'password'} required minLength={12} maxLength={128} autoComplete="new-password" value={draft.password} disabled={saving} onChange={e => setDraft({...draft,password:e.target.value})}/><button type="button" aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}</button></div><span className="helper">Mínimo 12 caracteres. Guardala para entregársela a la persona; no se mostrará después.</span></label>}

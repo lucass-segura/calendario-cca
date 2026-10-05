@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { LogOut } from 'lucide-react';
+import { ChangePassword } from './change-password';
 import { createClient } from '../lib/supabase/client';
 
 export function UserMenu() {
@@ -17,9 +18,9 @@ export function UserMenu() {
     return () => { active = false; };
   }, []);
   return (
-    <form action="/auth/signout" method="post" className="user-menu">
+    <div className="user-menu">
       {label && <span className="user-name">{label}</span>}
-      <button type="submit"><LogOut size={18} /> Cerrar sesión</button>
-    </form>
+      <ChangePassword /><form action="/auth/signout" method="post"><button type="submit"><LogOut size={18} /> Cerrar sesión</button></form>
+    </div>
   );
 }
