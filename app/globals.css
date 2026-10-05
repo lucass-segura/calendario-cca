@@ -42,3 +42,14 @@ html[data-theme=dark] .brand-logo{background:#fff}html[data-theme=dark] .brand-c
 
 .nav-mobile-name{display:none}@media(max-width:700px){.nav-desktop-name{display:none}.nav-mobile-name{display:block}.sidebar nav button{overflow-wrap:normal}.sidebar nav button span{font-size:12px}}
 .user-menu{display:grid;gap:8px;margin-top:10px}.user-name{font-size:13px;color:#cfdee6;overflow-wrap:anywhere}.user-menu button{font-size:14px}
+
+/* Keep every desktop menu item reachable on short screens and at browser zoom. */
+@media screen and (min-width:701px){
+  .sidebar{height:100vh;height:100dvh;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#9cb4c2 var(--navy);scroll-padding-block:16px}
+  .sidebar>*{flex-shrink:0}
+  .sidebar nav{min-width:0}
+  .sidebar nav button{overflow-wrap:anywhere}
+  .sidebar nav button svg{flex-shrink:0}
+  .sidebar-bottom{margin-top:auto;padding-top:22px;padding-bottom:4px}
+  .sidebar nav{margin-bottom:24px}
+}
