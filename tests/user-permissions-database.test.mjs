@@ -15,6 +15,7 @@ test('administrator assigns access, revocation takes effect and direct escalatio
     await db.exec(`insert into auth.users values('${admin}'),('${kitchen}'),('${member}'),('${fresh}');
       insert into public.profiles(id,username,full_name,role) values('${admin}','lucas.segura','Lucas','member'),('${kitchen}','cocina','Cocina','kitchen'),('${member}','miembro','Miembro','member');
       insert into public.reservations(id,title,sector,responsible,contact,date,start,"end",service,guests,notes,updated,meal_type) values('food','Almuerzo','Sector','Persona','','2020-01-01','12:00','14:00','food',10,'','2020','lunch'),('space','Salón','Sector','Persona','','2020-01-01','16:00','18:00','space',10,'','2020',null);`);
+    await db.query("update public.reservations set series_id='shared-series' where id in ('food','space')");
     await db.exec(await readFile(new URL('../supabase/migrations/20261005010000_user_permissions.sql',import.meta.url),'utf8'));
     async function asUser(id, fn) { await db.exec('set role authenticated'); await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]); try{await fn();}finally{await db.exec('reset role');} }
     const save=(id,username,permissions,enabled=true)=>db.query('select public.save_user_access($1,$2,$3,$4,$5)',[id,username,username,JSON.stringify(permissions),enabled]);
@@ -94,5 +95,58 @@ test('administrator assigns access, revocation takes effect and direct escalatio
     await asUser(fresh,async()=>{assert.equal((await db.query('select * from public.kitchen_reports')).rows.length,0);});
     await asUser(admin,async()=>{await save(fresh,'nuevo',['reservations.read','missions.read','stats.read'],false);});
     await asUser(fresh,async()=>{assert.equal((await db.query('select * from public.kitchen_reports')).rows.length,0);});
+    await db.exec(await readFile(new URL('../supabase/migrations/20261008000000_reservation_annulments.sql',import.meta.url),'utf8'));
+    // Planning is still immutable after a confirmation, even for the administrator.
+    await asUser(admin,async()=>{
+      await denied(()=>db.query("update public.reservations set guests=20 where id='food'"),'22023');
+      await denied(()=>db.query("delete from public.reservations where id='food'"),'22023');
+      await denied(()=>db.query("select public.annul_reservation('food','single','   ')"),'22023');
+      await denied(()=>db.query("select public.annul_reservation('food','invalid','Motivo')"),'22023');
+      await denied(()=>db.query("insert into public.reservation_annulments(reservation_id) values('forged')"),'42501');
+    });
+    await asUser(member,async()=>{
+      await denied(()=>db.query("select public.annul_reservation('food','single','No autorizado')"),'42501');
+      assert.equal((await db.query('select * from public.reservation_annulments')).rows.length,0);
+    });
+    await asUser(kitchen,async()=>{
+      await denied(()=>db.query("select public.annul_reservation('food','series','No autorizado')"),'42501');
+      await db.query("select public.confirm_kitchen_event('food',8,12000,1,'Corrección de comensales')");
+    });
+    const savedReport=(await db.query("select * from public.kitchen_reports where reservation_id='food'")).rows[0];
+    await asUser(admin,async()=>{
+      assert.equal((await db.query("select public.annul_reservation('food','series','Carga de prueba') as count")).rows[0].count,2);
+      assert.equal((await db.query('select * from public.reservations')).rows.length,0);
+      assert.equal((await db.query('select * from public.kitchen_reports')).rows.length,0);
+      assert.equal((await db.query('select * from public.kitchen_report_history')).rows.length,0);
+      const archive=(await db.query('select * from public.reservation_annulments order by reservation_id')).rows;
+      assert.equal(archive.length,2); assert.equal(archive[0].cancelled_by,admin);
+      assert.equal(archive[0].reason,'Carga de prueba');
+      assert.equal(archive[0].report_snapshot.actual_guests,8);
+      assert.equal(archive[0].history_snapshot.length,2);
+      assert.equal(archive[0].history_snapshot[0].actual_guests,9);
+      assert.equal((await db.query("select public.annul_reservation('food','single','Repetida') as count")).rows[0].count,0);
+      await denied(()=>db.query("select public.confirm_kitchen_event('food',8,12000,2,'Intento posterior')"),'22023');
+      await denied(()=>db.query("delete from public.reservation_annulments"),'42501');
+    });
+    assert.deepEqual((await db.query("select * from public.kitchen_reports where reservation_id='food'")).rows[0],savedReport);
+    assert.equal((await db.query('select * from public.kitchen_report_history')).rows.length,2);
+    await asUser(kitchen,async()=>{
+      assert.equal((await db.query('select * from public.reservation_annulments')).rows.length,0);
+      assert.equal((await db.query('select * from public.kitchen_reports')).rows.length,0);
+    });
+    await asUser(admin,async()=>{
+      await save(fresh,'nuevo',['reservations.read','missions.read','stats.read']);
+    });
+    await asUser(fresh,async()=>{assert.equal((await db.query('select * from public.kitchen_reports')).rows.length,0);});
+    await db.exec('set role anon');
+    await denied(()=>db.query("select public.annul_reservation('food','single','Anónimo')"),'42501');
+    await db.exec('reset role');
+    // The freed time can be booked again, but archived IDs cannot be recycled.
+    const draft= {title:'Nuevo almuerzo',sector:'Sector',sectors:['Sector'],responsible:'Persona',contact:'',date:'2020-01-01',start:'12:00',end:'14:00',service:'food',meal_type:'lunch',guests:10,notes:'',updated:'2026'};
+    await asUser(admin,async()=>{
+      await denied(()=>db.query('select public.create_reservations($1,$2,null,null)',[JSON.stringify(draft),JSON.stringify([{id:'food',date:draft.date}])]),'22023');
+      const result=await db.query('select public.create_reservations($1,$2,null,null) as result',[JSON.stringify(draft),JSON.stringify([{id:'replacement',date:draft.date}])]);
+      assert.equal(result.rows[0].result.count,1);
+    });
   } finally { await db.close(); }
 });

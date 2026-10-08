@@ -28,7 +28,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     if (!count) return Response.json({ error: scope === 'series' ? 'La serie ya no está disponible o algún horario está ocupado. No se modificó ninguna fecha.' : 'La reserva cambió o ese horario ya está ocupado.' }, { status: 409 });
     return Response.json({ ok: true, count });
   } catch (e) {
-    console.error(e);
+    if (e && typeof e === 'object' && 'code' in e && e.code === '22023') return Response.json({ error: 'Hay un evento confirmado. Corregí su cierre desde cocina o pedile al ADM que lo anule con un motivo.' }, { status: 409 });
     return Response.json({ error: 'No pudimos actualizar la reserva.' }, { status: 503 });
   }
 }
@@ -85,7 +85,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     if (!count) return Response.json({ error: 'La reserva ya no está disponible.' }, { status: 404 });
     return Response.json({ ok: true, count });
   } catch (e) {
-    console.error(e);
+    if (e && typeof e === 'object' && 'code' in e && e.code === '22023') return Response.json({ error: 'El evento tiene un cierre registrado. Solo el ADM puede anularlo, indicando un motivo.' }, { status: 409 });
     return Response.json({ error: 'No pudimos cancelar la reserva.' }, { status: 503 });
   }
 }
